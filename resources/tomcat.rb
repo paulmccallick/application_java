@@ -18,3 +18,5 @@
 #
 
 include ApplicationCookbook::ResourceBase
+
+attribute :tomcat_service_name, default: 'tomcat6'

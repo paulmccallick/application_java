@@ -24,6 +24,7 @@ class Chef
       class Deploy < Chef::Provider::File
 
         def initialize(new_resource, run_context)
+          super
           @deploy_resource = new_resource
           @new_resource = Chef::Resource::File.new(@deploy_resource.name)
           @new_resource.path ::File.join(@deploy_resource.destination, ::File.basename(@deploy_resource.repository))
@@ -38,6 +39,7 @@ class Chef
           @current_resource = nil
           @run_context = run_context
           @converge_actions = nil
+          @deployment_strategy ||= Chef::FileContentManagement::Deploy.strategy(true)
         end
 
         def target_revision
