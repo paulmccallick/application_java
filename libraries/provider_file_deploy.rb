@@ -17,6 +17,7 @@
 #
 
 require 'chef/provider/file'
+require 'chef/mixin/checksum'
 
 class Chef
   class Provider
@@ -26,6 +27,7 @@ class Chef
         def initialize(new_resource, run_context)
           super
           @deploy_resource = new_resource
+          Chef::Log.debug new_resource
           @new_resource = Chef::Resource::File.new(@deploy_resource.name)
           @new_resource.path ::File.join(@deploy_resource.destination, ::File.basename(@deploy_resource.repository))
           @new_resource.content @deploy_resource.repository
@@ -37,6 +39,7 @@ class Chef
           provider = @new_resource.provider
           @action = action
           @current_resource = nil
+          @synched = false
           @run_context = run_context
           @converge_actions = nil
           @deployment_strategy ||= Chef::FileContentManagement::Deploy.strategy(true)
@@ -51,10 +54,15 @@ class Chef
         alias :revision_slug :target_revision
 
         def action_sync
-          create_dir_unless_exists(@deploy_resource.destination)
-          purge_old_staged_files
-          action_create
-          @new_resource.checksum checksum(@new_resource.path)
+          if !@synched
+            create_dir_unless_exists(@deploy_resource.destination)
+            purge_old_staged_files
+            action_create
+            @synched = true
+          end
+          unless @new_resource.checksum
+            @new_resource.checksum checksum(@new_resource.path)
+          end
         end
 
         def set_content
